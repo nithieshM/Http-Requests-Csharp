@@ -1,22 +1,32 @@
-﻿namespace HttpRequestPractice;
+﻿using System.Text.Json;
+
+namespace HttpRequestPractice;
+
 using System.Net.Http.Headers;
 
 class Program
 {
-    public static async Task Main(string[] args)
-    {
-        using HttpClient client = new();
-        client.DefaultRequestHeaders.Accept.Clear();
-        client.DefaultRequestHeaders.Accept.Add(
-            new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/vnd.github.v3+json"));
-        client.DefaultRequestHeaders.Add("User-Agent", ".NET Foundation Repository Reporter");
-    
-        await ProcessRepositoriesAsync(client);
-    }
     static async Task ProcessRepositoriesAsync(HttpClient client)
     {
-        var json = await client.GetStringAsync("https://api.github.com/orgs/dotnet/repos");
-        
-        Console.Write(json);
+        await using Stream stream = await client.GetStreamAsync(
+            "https://www.thecocktaildb.com/api/json/v1/1/search.php?s=margarita");
+
+        var reposiotries = await JsonSerializer.DeserializeAsync<List<Repository>>(stream);
+
+
+        foreach (var repo in reposiotries ?? Enumerable.Empty<Repository>())
+            Console.Write(repo.strDrinks);
+    }
+
+    static async Task Main(string[] args)
+    {
+        using HttpClient client = new();
+
+        client.DefaultRequestHeaders.Accept.Clear();
+        client.DefaultRequestHeaders.Accept.Add(
+            new MediaTypeWithQualityHeaderValue("application/json"));
+        client.DefaultRequestHeaders.Add("User-Agent", "Cocktail-Retriever-dog");
+
+        await ProcessRepositoriesAsync(client);
     }
 }
